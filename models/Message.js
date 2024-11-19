@@ -26,6 +26,7 @@ const messageSchema = new Schema({
   timestamps: true
 })
 
-messageSchema.createIndexes(); // create indexes automatically  
+messageSchema.index({sender: 1})
+messageSchema.index({recipient: 1})
 
 export default model('Message', messageSchema);

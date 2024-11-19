@@ -2,7 +2,7 @@ import express from "express";
 import "dotenv/config";
 import morgan from "morgan";
 import cors from "cors";
-
+import usersRouter from "./routes/users.js";
 import connect from "./db/connect.js";
 connect();
 
@@ -16,7 +16,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 
 // Routers
-
+app.use("/api/users", usersRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Root API.");

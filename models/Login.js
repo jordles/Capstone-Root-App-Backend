@@ -1,12 +1,12 @@
 // Schema for Login Sensitive Data regarding the User
 // Certain data is accessible by only admins and also users themselves
-
+import {Schema, model} from 'mongoose';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-const loginSchema = new mongoose.Schema({
+const loginSchema = new Schema({
   user: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
@@ -24,8 +24,9 @@ const loginSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  token: {
-    type: String
+  isValid: {
+    type: Boolean,
+    default: true
   },
   lastActive: {
     type: Date,
@@ -39,7 +40,7 @@ const loginSchema = new mongoose.Schema({
 
 loginSchema.pre('save', async function(next) {
   if (this.isModified('password')) { 
-    const salt = await bcrypt.genSalt(1);
+    const salt = await bcrypt.genSalt(10);
     //if the password has modified; we need this condition to prevent unnecessary hashing
     this.password = await bcrypt.hash(this.password, salt);
   }
@@ -52,6 +53,6 @@ loginSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 
-loginSchema.createIndexes(); // create indexes automatically
+loginSchema.index({user: 1})
 
 export default model('Login', loginSchema)

@@ -37,6 +37,6 @@ const postSchema = new mongoose.Schema({
   timestamps: true
 });
 
-postSchema.createIndexes(); // create indexes automatically
+postSchema.index({user: 1});
 
 module.exports = mongoose.model('Post', postSchema);

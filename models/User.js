@@ -1,5 +1,4 @@
 import {Schema, model} from 'mongoose';
-import User from '../../../319-mongodb/SBA/models/User';
 
 const UserSchema = new Schema({
   name: {
@@ -32,14 +31,16 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId, 
     ref: 'Post' 
   }],
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   lastLogin: {
     type: Date,
     default: Date.now
   }
 }, {timestamps: true}
 ) 
-
-UserSchema.createIndexes(); // create indexes automatically
 
 //indexes
 // UserSchema.index({userId: 1})
