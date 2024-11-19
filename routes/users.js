@@ -35,24 +35,9 @@ router.get('/all', async (req, res) => {
 // Register User
 router.post('/register', async (req, res) => {
   try {
-    // Create user 
     const user = await User.create(req.body);
-
-    //Create JWT token for user authentication
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-
-    //Create login database for user
-    const login = new Login({
-      user: user._id,
-      username: req.body.username,
-      password: req.body.password,
-      email: req.body.email,
-    });
-    await login.save();
-
-    res.status(201).json({ token, createdUser: user, createdLogin: login });
-  }
-  catch (err) {
+    res.status(201).json(user);
+  } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
@@ -60,61 +45,11 @@ router.post('/register', async (req, res) => {
 // Login User
 router.post('/login', async (req, res) => {
   try {
-    const { userEmail, password } = req.body;
-
-    const login = await Login.findOne({
-      $or: [{ username: userEmail }, { email: userEmail }]
-    });
-
-    if (!login || !(await login.comparePassword(password))) {
-      return res.status(401).json({ error: 'Invalid username, email or password' });
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
-
-    const user = await User.findById(login.user);
-
-    if (!user || !user.isActive) {
-      throw new Error('User account is inactive');
-    }
-    
-    //Create JWT token for user authentication
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET); 
-    
-    // Update user's last login and login record
-    user.lastLogin = new Date();
-    login.lastActive = new Date();
-    await Promise.all([user.save(), login.save()]);
-
-    res.status(200).json({ token, user });
-  }
-  catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// Logout
-router.post('/logout', auth, async (req, res) => {
-  try {
-    await Login.findOneAndUpdate(
-      { _id: req.login._id },
-      { isValid: false }
-    );
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Get active sessions
-router.get('/sessions', auth, async (req, res) => {
-  try {
-    const sessions = await Login.find({
-      user: req.user._id,
-      isValid: true
-    });
-    res.json(sessions);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    const isMatch = await user.comparePassword(req.body.password);
+    if (!isMatch) {
 
 export default router;
