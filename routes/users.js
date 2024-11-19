@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import User from '../models/User.js';
 import Login from '../models/Login.js';
-import jwt from 'jsonwebtoken';
-import auth from '../middleware/auth.js';
 const router = Router();
 
 //get all users accessible only from admin key
@@ -36,7 +34,15 @@ router.get('/all', async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const user = await User.create(req.body);
-    res.status(201).json(user);
+
+    const login = await Login.create({
+      user: user._id,
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password
+    });
+
+    res.status(201).json({newUser: user, newLogin: login});
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -45,11 +51,30 @@ router.post('/register', async (req, res) => {
 // Login User
 router.post('/login', async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) {
+    const login = await Login.findOne({ email: req.body.email });
+    const isMatch = await login.matchPassword(req.body.password);
+    if (!login || !isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    const isMatch = await user.comparePassword(req.body.password);
-    if (!isMatch) {
+
+    res.json(login);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Update User Settings
+
+router.patch('/settings:id', async (req, res) => {
+  try {
+    const updatedLogin = await Login.findByIdAndUpdate(req.params.id, req.body, {new: true});
+    if(!updatedLogin) return res.status(404).json({ error: "No login with that _id" });
+    res.json(updatedLogin);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
 
 export default router;
