@@ -3,8 +3,10 @@ import "dotenv/config";
 import morgan from "morgan";
 import cors from "cors";
 import usersRouter from "./routes/users.js";
+import loginsRouter from "./routes/logins.js";
+import postsRouter from "./routes/posts.js";
 import connect from "./db/connect.js";
-connect();
+connect(); // Connect to MongoDB
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +19,8 @@ app.use(express.urlencoded({extended: true}))
 
 // Routers
 app.use("/api/users", usersRouter);
+app.use("/api/logins", loginsRouter);
+app.use("/api/posts", postsRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Root API.");
