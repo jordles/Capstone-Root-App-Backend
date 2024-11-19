@@ -2,7 +2,7 @@ import { Router } from 'express';
 import User from '../models/User.js';
 import Login from '../models/Login.js';
 import jwt from 'jsonwebtoken';
-
+import auth from '../middleware/auth.js';
 const router = Router();
 
 //get all users accessible only from admin key
@@ -50,7 +50,7 @@ router.post('/register', async (req, res) => {
     });
     await login.save();
 
-    res.status(201).json({ createdUser: user, createdLogin: login });
+    res.status(201).json({ token, createdUser: user, createdLogin: login });
   }
   catch (err) {
     res.status(400).json({ error: err.message });
@@ -66,13 +66,12 @@ router.post('/login', async (req, res) => {
       $or: [{ username: userEmail }, { email: userEmail }]
     });
 
-    console.log(login)
     if (!login || !(await login.comparePassword(password))) {
       return res.status(401).json({ error: 'Invalid username, email or password' });
     }
 
     const user = await User.findById(login.user);
-    console.log(user);
+
     if (!user || !user.isActive) {
       throw new Error('User account is inactive');
     }
@@ -89,6 +88,32 @@ router.post('/login', async (req, res) => {
   }
   catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Logout
+router.post('/logout', auth, async (req, res) => {
+  try {
+    await Login.findOneAndUpdate(
+      { _id: req.login._id },
+      { isValid: false }
+    );
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get active sessions
+router.get('/sessions', auth, async (req, res) => {
+  try {
+    const sessions = await Login.find({
+      user: req.user._id,
+      isValid: true
+    });
+    res.json(sessions);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 
