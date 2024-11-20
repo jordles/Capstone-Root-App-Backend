@@ -18,6 +18,22 @@ router.get('/all', async (req, res) => {
 });
 
 /**
+ * GET api/posts/feed
+ * @description Get all posts accessible by logged in users on the main feed page
+ */
+router.get('/feed', async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate('user', 'profilePicture')
+      .populate('comments.user', 'username profilePicture')
+      .sort('-createdAt');
+    res.json(posts);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+})
+
+/**
  * GET api/posts/id/:id
  * @description Get a specific post by _id
  */

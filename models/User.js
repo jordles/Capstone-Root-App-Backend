@@ -4,7 +4,15 @@ const UserSchema = new Schema({
   name: {
     first: { type: String, required: true },
     last: { type: String },
-    display: { type: String, required: true }
+    display: { type: String, required: true },
+    handle: { type: String, required: true, unique: true,
+      validate: [
+        function(input) {
+          return /[a-zA-Z0-9_]{1,15}/.test(input)
+        },
+        'Handle must be between 1 and 15 characters and contain only letters, numbers, and underscores.'
+      ] 
+    }
   },
   email:{
     type: String,
@@ -31,6 +39,11 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId, 
     ref: 'Post' 
   }],
+  status:{
+    type: String,
+    enum: ["online", "offline", "away", "busy"],
+    default: "online"
+  },
   isActive: {
     type: Boolean,
     default: true
