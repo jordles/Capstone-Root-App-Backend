@@ -87,7 +87,7 @@ router.post('/login', async (req, res) => {
     if (!login || !isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-
+    
     const user = await User.findById(login.user);
     // Update user's last login and login record
     user.lastLogin = new Date();
@@ -110,11 +110,13 @@ router.post('/login', async (req, res) => {
 router.patch('/settings/:id', async (req, res) => {
   try {
     const loginId = await Login.findOne({ user: req.params.id }).select('_id');
+
     const updatedLogin = await Login.findByIdAndUpdate(
       loginId || req.params.id, 
       req.body, 
       {new: true}
     ); 
+    
     const updatedUser = await User.findByIdAndUpdate(
       updatedLogin.user || req.params.id, 
       {$set: {}}, //set ensures any existing keys are preserved
@@ -143,18 +145,6 @@ router.patch('/settings/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-// if(req.body.email) await User.findByIdAndUpdate(updatedLogin.user, {email: req.body.email}, {new: true});
-
-    // res.json(req.body.email ? {updatedLogin, updatedUser: await User.findById(updatedLogin.user).select('email')} : updatedLogin);
-// router.patch('/settings/user/:id', async (req, res) => {
-//   try {
-//     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {new: true}); 
-//     if(!updatedUser) return res.status(404).json({ error: "No user with that _id" });
-//     res.json(updatedUser);
-//   } catch (err) {
-//     res.status(400).json({ error: err.message });
-//   }
-// });
 
 /**
  * DELETE /api/users/:id

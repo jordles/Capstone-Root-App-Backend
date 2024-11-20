@@ -82,7 +82,77 @@ router.post('/add', async (req, res) => {
 });
 
 /**
- * Patch api/posts/:id
+ * POST api/posts/:id/like
+ * @description like / unlike a post
+ */
+
+router.post('/:id/like', async (req, res) => {
+  try{
+    const post = await Post.findById(req.params.id);
+    if(!post) return res.status(404).json({error: "No post with that _id"});
+    const user = await User.findById(req.body.user || req.query.user);
+    if(!user) return res.status(404).json({error: "No user with that _id"});
+
+    if(!post.likes.includes(user._id)){
+      post.likes.push(user._id);
+      await post.save();
+      res.status(200).json({message: `Post liked by @${user.name.handle}`, post});
+    }
+    else{
+      post.likes.pull(user._id);
+      await post.save();
+      res.status(200).json({message: `Post unliked by @${user.handle}`, post});
+    }
+    
+  }
+  catch(err){
+    res.status(400).json({error: err.message});
+  }
+})
+
+/**
+ * POST api/posts/:id/comment
+ * @description Add a comment to a post
+ */
+
+router.post('/:id/comment', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if(!post) return res.status(404).json({ error: "No post with that _id" });
+    post.comments.push(req.body);
+    await post.save();
+    res.json(post);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * PATCH api/posts/:id/comment
+ * @description Update a comment to a post
+ */
+
+router.patch('/:id/comment', async (req, res) => {
+  try{
+    const user = await User.findById(req.body.user || req.query.user);
+    if(!user) return res.status(404).json({ error: "No user with that _id" });
+    const post = await Post.findById(req.params.id);
+    if(!post) return res.status(404).json({ error: "No post with that _id" });
+    post.comments.map(comment => {
+      if(comment.user == req.body.user || comment.user == req.query.user){
+        comment.content = req.body.content;
+      }
+    })
+    await post.save();
+    res.json(post);
+  }
+  catch(err){
+    res.status(400).json({error: err.message});
+  }
+})
+
+/**
+ * PATCH api/posts/:id
  * @description Update a post
  */
 

@@ -4,7 +4,7 @@ const UserSchema = new Schema({
   name: {
     first: { type: String, required: true },
     last: { type: String },
-    display: { type: String, required: true },
+    display: { type: String, max: 20, required: true },
     handle: { type: String, required: true, unique: true,
       validate: [
         function(input) {
@@ -55,10 +55,10 @@ const UserSchema = new Schema({
 }, {timestamps: true}
 ) 
 
-//indexes
-// UserSchema.index({userId: 1})
-// UserSchema.index({display: 1})
-// UserSchema.index({email: 1})
+UserSchema.index({userId: 1})
+UserSchema.index({handle: 1})
+UserSchema.index({display: 1})
+UserSchema.index({email: 1})
 
 
 export default model('User', UserSchema);
