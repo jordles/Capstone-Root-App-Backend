@@ -87,7 +87,7 @@ router.post('/login', async (req, res) => {
     if (!login || !isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    
+
     const user = await User.findById(login.user);
     // Update user's last login and login record
     user.lastLogin = new Date();
@@ -154,7 +154,12 @@ router.delete('/:id', async (req, res) => {
   try {
     const login = await Login.findByIdAndDelete(req.params.id);
     if(!login) return res.status(404).json({ error: "No login with that _id" });
-    res.json(login);
+
+    const user = await User.findByIdAndDelete(login.user);
+
+    //if other databases cannot find the user, it will return null and make the handle conversion be @deletedUser
+    
+    res.json({deletedUser: user, deletedLogin: login});
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

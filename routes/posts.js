@@ -101,7 +101,7 @@ router.post('/:id/like', async (req, res) => {
     else{
       post.likes.pull(user._id);
       await post.save();
-      res.status(200).json({message: `Post unliked by @${user.handle}`, post});
+      res.status(200).json({message: `Post unliked by @${user.name.handle}`, post});
     }
     
   }
