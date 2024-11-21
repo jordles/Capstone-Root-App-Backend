@@ -19,6 +19,13 @@ Flow:
 4. Clicks link → Enters new password
 5. Backend verifies token and updates password
 
+
+# Extra Libraries / Packages
+nodemailer - to send emails for password reset
+bcryptjs - for password encryption
+morgan - for logging requests and responses time
+
+
 ## Attributions
 
 [Password Reset](https://www.npmjs.com/package/nodemailer)
