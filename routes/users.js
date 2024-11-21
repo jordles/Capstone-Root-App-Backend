@@ -2,6 +2,8 @@ import { Router } from 'express';
 import User from '../models/User.js';
 import Login from '../models/Login.js';
 import Post from '../models/Post.js';
+import crypto from 'crypto';
+import { sendPasswordResetEmail } from '../utils/email.js';
 const router = Router();
 
 //get all users accessible only from admin key
@@ -78,14 +80,21 @@ router.post('/register', async (req, res) => {
 /**
  * POST /api/users/login
  * @description Login a user (through a form)
+ * -----------------------------------------------
+ * We are checking credentials through the logins database, nothing new is being created
  */
 
 router.post('/login', async (req, res) => {
   try {
-    const login = await Login.findOne({ email: req.body.email });
-    const isMatch = await login.matchPassword(req.body.password);
+    const { userEmail, password } = req.body;
+
+    const login = await Login.findOne({
+      $or: [{ username: userEmail }, { email: userEmail }]
+    });
+    
+    const isMatch = await login.matchPassword(password);
     if (!login || !isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid username, email or password' });
     }
 
     const user = await User.findById(login.user);
@@ -95,6 +104,71 @@ router.post('/login', async (req, res) => {
     await Promise.all([user.save(), login.save()]);
 
     res.json(login);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/users/forgot-password
+ * @description Request password reset email
+ * generates a reset token, stores it in the database and sends it in an email
+ */
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const login = await Login.findOne({ email });
+    
+    if (!login) {
+      return res.status(404).json({ error: 'No account with that email exists' });
+    }
+
+    // Generate reset token
+    const resetToken = login.createResetToken();
+    await login.save();
+
+    // Send reset email
+    await sendPasswordResetEmail(email, resetToken);
+
+    res.json({ message: 'Password reset email sent' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/users/reset-password/:token
+ * @description Reset password using token
+ * verify the reset token, update the password and clear the reset token
+ */
+router.post('/reset-password/:token', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const { token } = req.params;
+
+    // Hash the token from params to compare with stored hash to verify token
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    // Find login with valid token
+    const login = await Login.findOne({
+      resetToken: hashedToken,
+      resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!login) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    // Update password and clear reset token
+    login.password = password;
+    login.resetToken = undefined;
+    login.resetTokenExpiry = undefined;
+    await login.save();
+
+    res.json({ message: 'Password reset successful' });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -164,7 +238,5 @@ router.delete('/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-
-
 
 export default router;
