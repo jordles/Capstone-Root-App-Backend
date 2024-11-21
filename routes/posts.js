@@ -65,18 +65,23 @@ router.get('/user/:id', async (req, res) => {
  * POST api/posts/add
  * @description Add a new post
  */
-
 router.post('/add', async (req, res) => {
   try {
-    const newPost = await Post.create(req.body);
+    const { user, content, mediaUrls } = req.body;
+    const newPost = await Post.create({
+      user,
+      content,
+      mediaUrls: mediaUrls || []
+    });
 
-    const user = await User.findById(req.body.user);
-    if(!user) return res.status(404).json({ error: "No user found" });
-    user.posts.push(newPost._id);
-    await user.save();
+    const userDoc = await User.findById(user);
+    if(!userDoc) return res.status(404).json({ error: "No user found" });
+    userDoc.posts.push(newPost._id);
+    await userDoc.save();
 
     res.status(201).json({newPost, addedPostIdOnUser: newPost._id});
   } catch (err) {
+    console.error('Error creating post:', err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -85,7 +90,6 @@ router.post('/add', async (req, res) => {
  * POST api/posts/:id/like
  * @description like / unlike a post
  */
-
 router.post('/:id/like', async (req, res) => {
   try{
     const post = await Post.findById(req.params.id);
@@ -114,7 +118,6 @@ router.post('/:id/like', async (req, res) => {
  * POST api/posts/:id/comment
  * @description Add a comment to a post
  */
-
 router.post('/:id/comment', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -131,7 +134,6 @@ router.post('/:id/comment', async (req, res) => {
  * PATCH api/posts/:id/comment
  * @description Update a comment to a post
  */
-
 router.patch('/:id/comment', async (req, res) => {
   try{
     const user = await User.findById(req.body.user || req.query.user);
@@ -155,7 +157,6 @@ router.patch('/:id/comment', async (req, res) => {
  * PATCH api/posts/:id
  * @description Update a post
  */
-
 router.patch('/:id', async (req, res) => {
   try {
     
@@ -171,7 +172,6 @@ router.patch('/:id', async (req, res) => {
  * DELETE api/posts/:id
  * @description Delete a post
  */
-
 router.delete('/:id', async (req, res) => {
   try {
     const deletedPost = await Post.findByIdAndDelete(req.params.id);

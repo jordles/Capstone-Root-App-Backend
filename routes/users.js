@@ -57,6 +57,22 @@ router.get('/:id', async (req, res) => {
 })
 
 /**
+ * GET /api/users/:id/login
+ * @description Get a user's login info (Only logged in users can see their own login info)
+ */
+
+router.get('/:id/login', async (req, res) => {
+  try {
+    const login = await Login.findOne({ user: req.params.id })
+      .select('username email lastActive');
+    if(!login) return res.status(404).json({ error: "No login with that _id" });
+    res.json(login);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
  * POST /api/users/register
  * @description Register a user (through a form)
  */
