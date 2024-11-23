@@ -39,6 +39,10 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId, 
     ref: 'Post' 
   }],
+  conversations: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   status:{
     type: String,
     enum: ["online", "offline", "away", "busy"],

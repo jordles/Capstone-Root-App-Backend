@@ -57,6 +57,22 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * GET /api/users/:id/conversations
+ * @description Get a user's conversations 
+ * outputs a list of users that the current user has had conversations with
+ */
+
+router.get('/:id/conversations', async (req, res) => {
+  try {
+    const conversations = await User.findById(req.params.id).populate('conversations').select('conversations');
+    if(!conversations) return res.status(404).json({ error: "No user with that _id" });
+    res.json(conversations);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/users/profile/:handle
  * @description Get a user's profile by their handle
  * Used by anyone to view a user's profile page
