@@ -54,7 +54,28 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-})
+});
+
+/**
+ * GET /api/users/profile/:handle
+ * @description Get a user's profile by their handle
+ * Used by anyone to view a user's profile page
+ */
+
+router.get('/profile/:handle', async (req, res) => {
+  try {
+    const user = await User.findOne({'name.handle': req.params.handle})
+      .populate({
+        path: 'followers following',
+        select: 'profilePicture bio'
+      })
+      .populate('posts');
+    if(!user) return res.status(404).json({ error: "No user with that handle" });
+    res.json(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 /**
  * GET /api/users/:id/login
@@ -67,6 +88,82 @@ router.get('/:id/login', async (req, res) => {
       .select('username email lastActive');
     if(!login) return res.status(404).json({ error: "No login with that _id" });
     res.json(login);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/users/suggestions/:userId
+ * @description Get user suggestions (users not being followed by the current user)
+ */
+router.get('/suggestions/:userId', async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.params.userId);
+    if (!currentUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get users that the current user is not following
+    // Exclude the current user and users they already follow
+    const suggestions = await User.find({
+      _id: { 
+        $nin: [
+          currentUser._id, 
+          ...(currentUser.following || [])
+        ]
+      }
+    })
+    .select('name profilePicture bio') // Only select necessary fields
+    .limit(5); // Limit to 5 suggestions
+
+    res.json(suggestions);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/users/:userId/follow
+ * @description Follow/Unfollow a user
+ */
+router.post('/:userId/follow', async (req, res) => {
+  try {
+    const { userToFollowId } = req.body;
+    const currentUserId = req.params.userId;
+
+    // Check if both users exist
+    const [currentUser, userToFollow] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(userToFollowId)
+    ]);
+
+    if (!currentUser || !userToFollow) {
+      return res.status(404).json({ error: "One or both users not found" });
+    }
+
+    // Check if already following
+    const isFollowing = currentUser.following.includes(userToFollowId);
+
+    if (isFollowing) {
+      // Unfollow
+      await User.findByIdAndUpdate(currentUserId, {
+        $pull: { following: userToFollowId }
+      });
+      await User.findByIdAndUpdate(userToFollowId, {
+        $pull: { followers: currentUserId }
+      });
+      res.json({ message: "User unfollowed successfully" });
+    } else {
+      // Follow
+      await User.findByIdAndUpdate(currentUserId, {
+        $addToSet: { following: userToFollowId }
+      });
+      await User.findByIdAndUpdate(userToFollowId, {
+        $addToSet: { followers: currentUserId }
+      });
+      res.json({ message: "User followed successfully" });
+    }
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
