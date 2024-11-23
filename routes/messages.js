@@ -4,7 +4,7 @@ import Message from '../models/Message.js';
 const router = Router();
 
 /**
- * GET /api/messages/conversation
+ * GET /api/messages/conversation/:sender/:recipient
  * @description Get chat history between two users
  */
 router.get('/conversation/:sender/:recipient', async (req, res) => {
@@ -21,8 +21,8 @@ router.get('/conversation/:sender/:recipient', async (req, res) => {
         { sender, recipient },
         { sender: recipient, recipient: sender }
       ]
-    }).sort('createdAt');
-
+    }).sort({ 'createdAt': -1 });
+    
     if (messages.length === 0) {
       return res.status(404).json({ error: "No messages found between these users" });
     }
@@ -49,7 +49,6 @@ router.get('/conversations/:sender', async (req, res) => {
   }
 });
 
-
 /**
  * GET /api/messages/unread/:userId
  * @description Get count of unread messages for a user
@@ -66,6 +65,7 @@ router.get('/unread/:userId', async (req, res) => {
   }
 });
 
+
 /**
  * POST /api/messages
  * @description Send a new message
@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
 
 
     const { sender, recipient, content } = req.body;
-    
+
     // Validate users exist
     const [senderUser, recipientUser] = await Promise.all([
       User.findById(sender),
