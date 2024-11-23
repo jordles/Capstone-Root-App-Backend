@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import Mongoose from 'mongoose';
 import User from '../models/User.js';
 import Message from '../models/Message.js';
 const router = Router();
@@ -41,13 +42,34 @@ router.get('/conversation/:sender/:recipient', async (req, res) => {
 
 router.get('/conversations/:sender', async (req, res) => {
   try {
-    const conversations = await Message.find({ sender: req.params.sender }).distinct('recipient');
-    if(!conversations) return res.status(404).json({ error: "No user with that _id" });
-    res.json(conversations);
+    const conversations = await Message.find({ 
+      $or: [{ sender: req.params.sender }, { recipient: req.params.sender } ] 
+    }).distinct('sender' || 'recipient');
+    console.log('conversations', conversations);
+
+    if (!conversations || conversations.length === 0) {
+      return res.status(404).json({ error: "No conversations found for this user" });
+    }
+
+    const filteredConversations = conversations.filter(conv =>  conv.toString() !== req.params.sender); //to string to convert the ObjectId to a string to compare by proper data type
+    res.json(filteredConversations);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
+// router.get('/conversations/:sender', async (req, res) => {
+//   try {
+//     // const conversations = await Message.find({ sender: req.params.sender }).distinct('recipient');
+//     const conversations = await Message.find({ 
+//       $or: [{ sender: req.params.sender }, { recipient: req.params.sender } ] 
+//     }).distinct('recipient');
+//     if(!conversations) return res.status(404).json({ error: "No user with that _id" });
+//     res.json(conversations);
+//   } catch (err) {
+//     res.status(400).json({ error: err.message });
+//   }
+// });
 
 /**
  * GET /api/messages/unread/:userId
