@@ -53,7 +53,7 @@ router.get('/id/:id', async (req, res) => {
  */
 router.get('/user/:id', async (req, res) => {
   try {
-    const posts = await Post.find({ user: req.params.id });
+    const posts = await Post.find({ user: req.params.id }).sort('-createdAt');
     if(!posts) return res.status(404).json({ error: 'No posts found' });
     res.json(posts);
   } catch (err) {
