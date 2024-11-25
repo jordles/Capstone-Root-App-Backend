@@ -2,6 +2,7 @@
 
 Database for my Root application using MongoDB and Mongoose. This is where the backend of my application is located.
 
+[Demo](https://rootapp.netlify.app/)
 [Frontend](https://github.com/jordles/Capstone-Root-App-Frontend)
 
 
