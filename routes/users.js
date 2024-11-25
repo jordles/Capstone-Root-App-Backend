@@ -4,6 +4,7 @@ import Login from '../models/Login.js';
 import Post from '../models/Post.js';
 import crypto from 'crypto';
 import { sendPasswordResetEmail } from '../utils/email.js';
+
 const router = Router();
 
 //get all users accessible only from admin key
@@ -50,7 +51,22 @@ router.get('/:id', async (req, res) => {
         select: 'profilePicture bio'
       })
       .populate('posts');
-    res.json(user);
+
+    // If user exists, return it
+    if (user) {
+      return res.json(user);
+    }
+
+    // If user doesn't exist, check if there are any posts by this user
+    const postsExist = await Post.exists({ user: req.params.id });
+
+    // Only send 404 if both user doesn't exist AND there are no posts
+    if (!postsExist) {
+      return res.status(404).json({ error: "No user with that _id" });
+    }
+
+    // If there are posts but no user, return null without error
+    res.json(null);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -304,7 +320,7 @@ router.post('/reset-password/:token', async (req, res) => {
 });
 
 /**
- * GET /api/users/settings/:id
+ * PATCH /api/users/settings/:id
  * @description Update a users Login settings
  * -----------------------------------------------
  * Find by login id and update the login
@@ -355,10 +371,16 @@ router.patch('/settings/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const login = await Login.findByIdAndDelete(req.params.id);
+
+    const user = await User.findByIdAndDelete(req.params.id);
+    if(!user) return res.status(404).json({ error: "No user with that _id" });
+    const login = await Login.findByIdAndDelete(user.login);
     if(!login) return res.status(404).json({ error: "No login with that _id" });
 
-    const user = await User.findByIdAndDelete(login.user);
+    // const login = await Login.findByIdAndDelete(req.params.id);
+    // if(!login) return res.status(404).json({ error: "No login with that _id" });
+
+    // const user = await User.findByIdAndDelete(login.user);
 
     //if other databases cannot find the user, it will return null and make the handle conversion be @deletedUser
     

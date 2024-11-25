@@ -37,6 +37,23 @@ router.get('/:id', async (req, res) => {
   
 });
 
+/**
+ * PATCH /api/logins
+ * @description Update a login
+ */
+
+router.patch('/:id', async (req, res) => {
+  try{
+    const updatedLogin = await Login.findByIdAndUpdate(req.params.id, req.body, {new: true});
+    if(!updatedLogin) return res.status(404).json({ error: 'No login found' });
+    res.json(updatedLogin);
+  }
+  catch(err){
+    res.status(400).send(err.message);
+  }
+  
+});
+
 
 //Admins should not have the power to alter the sensitive info other than the user itself. 
 
@@ -48,12 +65,19 @@ router.get('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try{
-    const login = await Login.findByIdAndDelete(req.params.id);
-    if(!login) return res.status(404).json({ error: 'No login found' });
+    const deletedLogin = await Login.findOneAndDelete({ user: req.params.id });
+    if(!deletedLogin) return res.status(404).json({ error: 'No login found' });
 
-    const user = await User.findByIdAndDelete(login.user);
-    if(!user) return res.status(404).json({ error: 'No user found' });
-    res.json(login);
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if(!deletedUser) return res.status(404).json({ error: 'No user found' });
+    res.json({deletedUser, deletedLogin});
+
+    // const login = await Login.findByIdAndDelete(req.params.id);
+    // if(!login) return res.status(404).json({ error: 'No login found' });
+
+    // const user = await User.findByIdAndDelete(login.user);
+    // if(!user) return res.status(404).json({ error: 'No user found' });
+    // res.json(login);
   }
   catch(err){
     res.status(400).send(err.message);
