@@ -98,3 +98,4 @@ morgan - for logging requests and responses time
 ## Attributions
 
 [Password Reset](https://www.npmjs.com/package/nodemailer)
+[animated background](https://wweb.dev/resources/animated-css-background-generator)
