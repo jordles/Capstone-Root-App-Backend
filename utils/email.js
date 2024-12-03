@@ -14,7 +14,7 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
     const frontendUrl = process.env.NODE_ENV === 'production' 
         ? 'https://rootapp.netlify.app'
         : 'http://localhost:5173';
-    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+    const resetUrl = `${frontendUrl}/api/users/reset-password/${resetToken}`;
     
     const mailOptions = {
         from: process.env.EMAIL_USER,
