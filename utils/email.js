@@ -10,9 +10,10 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendPasswordResetEmail = async (email, resetToken) => {
-
     // Use environment variable for frontend URL, fallback to localhost for development
-    const frontendUrl = 'https://rootapp.netlify.app' || 'http://localhost:5173';
+    const frontendUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://rootapp.netlify.app'
+        : 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
     
     const mailOptions = {
