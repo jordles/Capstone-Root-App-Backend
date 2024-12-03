@@ -237,8 +237,14 @@ router.post('/login', async (req, res) => {
       $or: [{ username: userEmail }, { email: userEmail }]
     });
     
+    // First check if login exists
+    if (!login) {
+      return res.status(401).json({ error: 'Invalid username, email or password' });
+    }
+
+    // Then check password
     const isMatch = await login.matchPassword(password);
-    if (!login || !isMatch) {
+    if (!isMatch) {
       return res.status(401).json({ error: 'Invalid username, email or password' });
     }
 
