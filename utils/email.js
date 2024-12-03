@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendPasswordResetEmail = async (email, resetToken) => {
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `https://capstone-root-app-backend.onrender.com/reset-password/${resetToken}`;
     
     const mailOptions = {
         from: process.env.EMAIL_USER,
