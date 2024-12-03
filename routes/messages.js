@@ -42,16 +42,35 @@ router.get('/conversation/:sender/:recipient', async (req, res) => {
 
 router.get('/conversations/:sender', async (req, res) => {
   try {
-    const conversations = await Message.find({ 
-      $or: [{ sender: req.params.sender }, { recipient: req.params.sender } ] 
-    }).distinct('sender' || 'recipient');
-    console.log('conversations', conversations);
+    // const conversations = await Message.find({ 
+    //   $or: [{ sender: req.params.sender }, { recipient: req.params.sender } ] 
+    // }).distinct('sender' || 'recipient');
+    // console.log('conversations', conversations);
 
-    if (!conversations || conversations.length === 0) {
+    
+    // First, find all messages where the user is either sender or recipient
+    const messages = await Message.find({ 
+      $or: [{ sender: req.params.sender }, { recipient: req.params.sender }] 
+    });
+
+    // Extract unique user IDs (both senders and recipients)
+    const userIds = new Set();
+    messages.forEach(message => {
+      userIds.add(message.sender.toString());
+      userIds.add(message.recipient.toString());
+    });
+
+    // Remove the current user's ID
+    userIds.delete(req.params.sender);
+
+    // Convert Set to Array
+    const filteredConversations = Array.from(userIds);
+
+    if (filteredConversations.length === 0) {
       return res.status(404).json({ error: "No conversations found for this user" });
     }
 
-    const filteredConversations = conversations.filter(conv =>  conv.toString() !== req.params.sender); //to string to convert the ObjectId to a string to compare by proper data type
+    // const filteredConversations = conversations.filter(conv =>  conv.toString() !== req.params.sender); //to string to convert the ObjectId to a string to compare by proper data type
     res.json(filteredConversations);
   } catch (err) {
     res.status(400).json({ error: err.message });
