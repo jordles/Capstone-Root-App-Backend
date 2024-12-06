@@ -8,6 +8,7 @@ import usersRouter from "./routes/users.js";
 import loginsRouter from "./routes/logins.js";
 import postsRouter from "./routes/posts.js";
 import messagesRouter from "./routes/messages.js";
+import cloudinaryRoutes from "./routes/cloudinary.js";
 import connect from "./db/connect.js";
 
 connect(); // Connect to MongoDB
@@ -53,6 +54,7 @@ app.use("/api/users", usersRouter);
 app.use("/api/logins", loginsRouter);
 app.use("/api/posts", postsRouter);
 app.use("/api/messages", messagesRouter);
+app.use("/api/cloudinary", cloudinaryRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Root API.");
