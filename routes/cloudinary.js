@@ -18,21 +18,34 @@ router.post('/delete', async (req, res) => {
   try {
     const { publicId, resourceType } = req.body;
     
+    console.log('Received delete request:', { publicId, resourceType });
+    
     if (!publicId || !resourceType) {
       return res.status(400).json({ error: 'Missing publicId or resourceType' });
     }
 
     // Delete the file from Cloudinary
+    console.log('Attempting to delete from Cloudinary with:', { publicId, resourceType });
     const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    console.log('Cloudinary delete result:', result);
     
     if (result.result === 'ok') {
       res.json({ message: 'File deleted successfully' });
     } else {
-      res.status(500).json({ error: 'Failed to delete file from Cloudinary' });
+      console.error('Failed to delete from Cloudinary:', result);
+      res.status(500).json({ error: 'Failed to delete file from Cloudinary', details: result });
     }
   } catch (error) {
-    console.error('Error deleting from Cloudinary:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error deleting from Cloudinary:', {
+      message: error.message,
+      stack: error.stack,
+      details: error.response?.data
+    });
+    res.status(500).json({ 
+      error: 'Server error', 
+      message: error.message,
+      details: error.response?.data 
+    });
   }
 });
 
